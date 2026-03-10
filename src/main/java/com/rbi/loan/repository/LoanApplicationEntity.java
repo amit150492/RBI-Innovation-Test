@@ -1,15 +1,18 @@
 package com.rbi.loan.repository;
 
 import com.rbi.loan.model.RiskBand;
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+@Entity
+@Table(name = "loan_applications")
+@Getter
+@Setter
 public class LoanApplicationEntity {
     @Id
     private UUID applicationId;
