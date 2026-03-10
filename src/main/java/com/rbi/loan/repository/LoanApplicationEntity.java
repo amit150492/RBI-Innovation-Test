@@ -2,6 +2,8 @@ package com.rbi.loan.repository;
 
 import com.rbi.loan.model.RiskBand;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 
 import java.math.BigDecimal;
@@ -10,7 +12,8 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "loan_applications")
-
+@Getter
+@Setter
 public class LoanApplicationEntity {
     @Id
     private UUID applicationId;

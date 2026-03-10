@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -54,7 +55,7 @@ public class LoanService {
         return saveAndReturn(req, "APPROVED", riskBand, offer, null);
     }
 
-    private BigDecimal calculateEMI(BigDecimal p, BigDecimal rAnn, int n) {
+    public BigDecimal calculateEMI(BigDecimal p, BigDecimal rAnn, int n) {
         BigDecimal r = rAnn.divide(new BigDecimal("1200"), 10, RoundingMode.HALF_UP);
         BigDecimal pow = r.add(BigDecimal.ONE).pow(n);
         return p.multiply(r).multiply(pow).divide(pow.subtract(BigDecimal.ONE), 2, RoundingMode.HALF_UP);
@@ -79,16 +80,37 @@ public class LoanService {
     private LoanResponse saveAndReturn(LoanApplicationRequest req, String status, RiskBand band, Offer offer, List<String> reasons) {
         UUID appId = UUID.randomUUID();
 
-        // Save to database
         LoanApplicationEntity entity = new LoanApplicationEntity();
+
+        // 1. Core Application Data
         entity.setApplicationId(appId);
-        entity.setApplicantName(req.applicant().name());
         entity.setStatus(status);
         entity.setRiskBand(band);
+        entity.setCreatedAt(LocalDateTime.now());
+
+        // 2. Mapping Applicant Details
+        entity.setApplicantName(req.applicant().name());
+        entity.setApplicantAge(req.applicant().age());
+        entity.setMonthlyIncome(req.applicant().monthlyIncome());
+        entity.setCreditScore(req.applicant().creditScore());
+
+        // 3. Mapping Loan Details
+        entity.setLoanAmount(req.loan().amount());
+        entity.setTenureMonths(req.loan().tenureMonths());
+
+        // 4. Mapping Offer Data (Only if APPROVED)
+        if (offer != null) {
+            entity.setInterestRate(offer.interestRate());
+            entity.setEmi(offer.emi());
+        }
+
+        // 5. Mapping Rejection Reasons (Only if REJECTED)
+        if (reasons != null && !reasons.isEmpty()) {
+            entity.setRejectionReasons(String.join(", ", reasons));
+        }
+
         loanRepository.save(entity);
 
-        // If APPROVED, 'reasons' is null (so it disappears from JSON)
-        // If REJECTED, 'offer' is null (so it disappears from JSON)
         return new LoanResponse(appId, status, band, offer, reasons);
     }
 }
